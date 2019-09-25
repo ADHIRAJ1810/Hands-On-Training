@@ -1,4 +1,4 @@
-trigger DonationTrigger on Opportunity (after insert) 
+trigger DonationTrigger on Opportunity (after update,after insert) 
 {
     if (Trigger.isAfter) 
     {
@@ -7,5 +7,11 @@ trigger DonationTrigger on Opportunity (after insert)
             //Passing the new Donations Created
             TriggerDonationHelper.isAfterInsertMethod(Trigger.new);
         }
+
+        if (Trigger.isUpdate) 
+        {
+            TriggerDonationHelper.isAfterUpdateMethod(Trigger.oldMap,Trigger.newMap);
+        }
     }
+
 }

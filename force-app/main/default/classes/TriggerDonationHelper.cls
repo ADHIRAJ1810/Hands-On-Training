@@ -4,4 +4,9 @@ public with sharing class TriggerDonationHelper
     {
         TriggerDonationHelperHandler.createDonationInstallment(newDonationList);
     }
+
+    public static void isAfterUpdateMethod(Map<Id,Opportunity> oldTriggerMap,Map<Id,Opportunity> newTriggerMap)
+    {
+        TriggerDonationHelperHandler.createInstallmentForUpdatedAmount(oldTriggerMap,newTriggerMap);
+    }
 }
