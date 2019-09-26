@@ -3,10 +3,6 @@ public with sharing class TriggerDonationHelperHandler
     public static List<Installment_Manager__c> installmentList = new List<Installment_Manager__c>();
     public static Integer dateIncreament = 0;
 
-    public static List<Id> opportunityIdList = new List<Id>();
-    public static List<Opportunity> newChildDonationList = new List<Opportunity>();
-
-
     public static void createDonationInstallment(List<Opportunity> newDonationList)
     {
         System.debug('Trigger New List : ' + newDonationList);
@@ -75,7 +71,9 @@ public with sharing class TriggerDonationHelperHandler
         {
             if (installmentList.size() > 0 || installmentList != Null )
             {
-                insert(installmentList);
+                System.debug('Before Insert installment list '+installmentList);
+                insert installmentList;
+                System.debug('Before Insert installment list '+installmentList);
             }
         }
         catch (Exception ex)
@@ -87,20 +85,31 @@ public with sharing class TriggerDonationHelperHandler
 
     public static void createInstallmentForUpdatedAmount(Map<Id,Opportunity> oldTriggerMap,Map<Id,Opportunity> newTriggerMap)
     {
+        List<Id> opportunityIdList = new List<Id>();
+        List<Id> completeAllAtOnce = new List<Id>();
+
+        List<Opportunity> newChildDonationList = new List<Opportunity>();
+
         for(Id opportunityId : newTriggerMap.keySet())
         {
-            Opportunity oldOpportunityObject = oldTriggerMap.get(opportunityId);
-            Opportunity newOpportunityObject = newTriggerMap.get(opportunityId);
-
-            if(newOpportunityObject.Amount != oldOpportunityObject.Amount || 
-            newOpportunityObject.Payment_Frequency__c != oldOpportunityObject.Payment_Frequency__c ||
-            newOpportunityObject.Years__c != oldOpportunityObject.Years__c)
+            if( (newTriggerMap.get(opportunityId).Amount != oldTriggerMap.get(opportunityId).Amount || 
+                newTriggerMap.get(opportunityId).Payment_Frequency__c != oldTriggerMap.get(opportunityId).Payment_Frequency__c ||
+                newTriggerMap.get(opportunityId).Years__c != oldTriggerMap.get(opportunityId).Years__c ) &&
+                newTriggerMap.get(opportunityId).Complete_all_Installments_at_Once__c == false)
             {
                 opportunityIdList.add(opportunityId);
-                newChildDonationList.add(newOpportunityObject);
+                newChildDonationList.add(newTriggerMap.get(opportunityId));
+            }
+
+            else if( (newTriggerMap.get(opportunityId).Amount == oldTriggerMap.get(opportunityId).Amount || 
+                newTriggerMap.get(opportunityId).Payment_Frequency__c == oldTriggerMap.get(opportunityId).Payment_Frequency__c ||
+                newTriggerMap.get(opportunityId).Years__c == oldTriggerMap.get(opportunityId).Years__c ) &&
+                newTriggerMap.get(opportunityId).Complete_all_Installments_at_Once__c == true)
+            {
+                completeAllAtOnce.add(opportunityId);
             }
         }
-        System.debug(newChildDonationList);
+
         List<Installment_Manager__c> installmentsDeleteList  = [
                                                                   SELECT Id, Donation_Manager__c 
                                                                   FROM Installment_Manager__c 
@@ -109,15 +118,29 @@ public with sharing class TriggerDonationHelperHandler
 
         if ( !installmentsDeleteList.isEmpty() ) 
         {
-           System.debug(installmentsDeleteList);
            Database.delete(installmentsDeleteList);
            TriggerDonationHelperHandler.createDonationInstallment(newChildDonationList);
-           System.debug(newChildDonationList);
         }
         else
         {
            TriggerDonationHelperHandler.createDonationInstallment(newChildDonationList);
-           System.debug(newChildDonationList);
         }
+        
+
+        List<Installment_Manager__c> installmentsUpdateList  = [
+                                                                SELECT Id, Donation_Manager__c 
+                                                                FROM Installment_Manager__c 
+                                                                WHERE Donation_Manager__c IN :completeAllAtOnce
+                                                                ];
+
+        if (!installmentsUpdateList.isEmpty()) 
+        {
+            TriggerDonationHelperHandler.updateInstallmentAtOnce(installmentsUpdateList);
+        }
+    }
+
+    public static void updateInstallmentAtOnce(List<Installment_Manager__c> installmentsUpdateList)
+    {
+        
     }
 }
