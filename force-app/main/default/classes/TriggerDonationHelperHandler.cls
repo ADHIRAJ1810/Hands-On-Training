@@ -3,85 +3,84 @@ public with sharing class TriggerDonationHelperHandler
     public static List<Installment_Manager__c> installmentList = new List<Installment_Manager__c>();
     public static Integer dateIncreament = 0;
 
-    public static void createDonationInstallment(List<Opportunity> newDonationList)
+    public static void createInstallmentCall( Installment_Manager__c singleInstallment, Id parameterId,Date parameterDate,
+                                              Decimal parameterAmount,Integer dateCount, Integer installmentCount)
     {
-        System.debug('Trigger New List : ' + newDonationList);
-
-        for (Opportunity opportunityInstance : newDonationList)
+        for(Integer iterator =0; iterator <installmentCount; iterator++)
         {
-            if(opportunityInstance.Amount > 0 || opportunityInstance.Amount!=null)
+            singleInstallment.Donation_Manager__c = parameterId;
+            singleInstallment.Installment_Date__c = parameterDate.addMonths( 0 + dateCount);
+            singleInstallment.Installment_Amount__c = parameterAmount;
+            installmentList.add(singleInstallment);
+            dateCount = dateCount;
+        }
+    }
+
+        public static void createDonationInstallment(List<Opportunity> newDonationList)
+        {
+            Installment_Manager__c singleInstallment = new Installment_Manager__c();
+
+            for (Opportunity opportunityInstance : newDonationList)
             {
-                if (opportunityInstance.Payment_Frequency__c == 'Monthly')
+                if(opportunityInstance.Amount > 0 || opportunityInstance.Amount!=null)
                 {
-                    for(Integer iterator =0;iterator < opportunityInstance.number_of_installments__c ; iterator++)
+                    if (opportunityInstance.Payment_Frequency__c == 'Monthly')
                     {
-                        Installment_Manager__c singleInstallment = new Installment_Manager__c();
-                        singleInstallment.Donation_Manager__c = opportunityInstance.Id;
-                        singleInstallment.Installment_Date__c = opportunityInstance.CloseDate.addMonths(0+dateIncreament);
-                        singleInstallment.Installment_Amount__c = opportunityInstance.Amount_per_Installment__c;
-                        installmentList.add(singleInstallment);
-                        dateIncreament++;
+                        dateIncreament = 0;
+
+                        TriggerDonationHelperHandler.createInstallmentCall(
+                        singleInstallment,
+                        opportunityInstance.Id,
+                        opportunityInstance.CloseDate,
+                        opportunityInstance.Amount_per_Installment__c,
+                        dateIncreament+1,
+                        opportunityInstance.number_of_installments__c
+                        );
                     }
-                }
-                else if(opportunityInstance.Payment_Frequency__c == 'Quarterly')
-                {
-                    for(Integer iterator =0;iterator < opportunityInstance.number_of_installments__c ; iterator++)
+                    else if(opportunityInstance.Payment_Frequency__c == 'Quarterly')
                     {
-                        Installment_Manager__c singleInstallment = new Installment_Manager__c();
-                        singleInstallment.Donation_Manager__c = opportunityInstance.Id;
-                        singleInstallment.Installment_Date__c = opportunityInstance.CloseDate.addMonths(0+dateIncreament);
-                        singleInstallment.Installment_Amount__c = opportunityInstance.Amount_per_Installment__c;
-                        installmentList.add(singleInstallment);
-                        dateIncreament = dateIncreament+3;
-                    }
+                        dateIncreament = 0;
 
-                }
-                else if(opportunityInstance.Payment_Frequency__c == 'Half Yearly')
-                {
-                    for(Integer iterator =0;iterator < opportunityInstance.number_of_installments__c ; iterator++)
+                        TriggerDonationHelperHandler.createInstallmentCall(
+                        singleInstallment, opportunityInstance.Id,opportunityInstance.CloseDate, opportunityInstance.Amount_per_Installment__c,
+                        dateIncreament+3,opportunityInstance.number_of_installments__c);
+                    }
+                    else if(opportunityInstance.Payment_Frequency__c == 'Half Yearly')
                     {
+                        dateIncreament = 0;
 
-                        Installment_Manager__c singleInstallment = new Installment_Manager__c();
-                        singleInstallment.Donation_Manager__c = opportunityInstance.Id;
-                        singleInstallment.Installment_Date__c = opportunityInstance.CloseDate.addMonths(0+dateIncreament);
-                        singleInstallment.Installment_Amount__c = opportunityInstance.Amount_per_Installment__c;
-                        installmentList.add(singleInstallment);
-                        dateIncreament = dateIncreament+6;
+                        TriggerDonationHelperHandler.createInstallmentCall(
+                        singleInstallment, opportunityInstance.Id,opportunityInstance.CloseDate, opportunityInstance.Amount_per_Installment__c,
+                        dateIncreament+6,opportunityInstance.number_of_installments__c);
+
                     }
-
+                    else
+                    {
+                        TriggerDonationHelperHandler.createInstallmentCall(
+                        singleInstallment, opportunityInstance.Id,opportunityInstance.CloseDate, opportunityInstance.Amount_per_Installment__c,
+                        0,opportunityInstance.number_of_installments__c);
+                    }
                 }
                 else
                 {
-                    for(Integer iterator =0;iterator < opportunityInstance.number_of_installments__c ; iterator++)
-                    {
-                        Installment_Manager__c singleInstallment = new Installment_Manager__c();
-                        singleInstallment.Donation_Manager__c = opportunityInstance.Id;
-                        singleInstallment.Installment_Date__c = opportunityInstance.CloseDate;
-                        singleInstallment.Installment_Amount__c = opportunityInstance.Amount_per_Installment__c;
-                        installmentList.add(singleInstallment);
-                    }
+                    System.debug('Debug for Amount =0 || Null ');
                 }
             }
-            else
+            //Try to insert InstallmentList if Installment not Debug Exception.
+            try
             {
-                System.debug('Debug for Amount =0 || Null ');
+                if (installmentList.size() > 0 || installmentList != Null )
+                {
+                    System.debug('Before Insert installment list '+installmentList);
+                    Database.insert(installmentList);
+                    System.debug('After Insert installment list '+installmentList);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.debug('Exception--- ' + ex);
             }
         }
-        try
-        {
-            if (installmentList.size() > 0 || installmentList != Null )
-            {
-                System.debug('Before Insert installment list '+installmentList);
-                insert installmentList;
-                System.debug('Before Insert installment list '+installmentList);
-            }
-        }
-        catch (Exception ex)
-        {
-            System.debug('Unfortunately ' +ex+ ' occured ,hence cannot insert');
-        }
-
-    }
 
     public static void createInstallmentForUpdatedAmount(Map<Id,Opportunity> oldTriggerMap,Map<Id,Opportunity> newTriggerMap)
     {
@@ -92,7 +91,7 @@ public with sharing class TriggerDonationHelperHandler
 
         for(Id opportunityId : newTriggerMap.keySet())
         {
-            if( (newTriggerMap.get(opportunityId).Amount != oldTriggerMap.get(opportunityId).Amount || 
+            if( (newTriggerMap.get(opportunityId).Amount != oldTriggerMap.get(opportunityId).Amount ||
                 newTriggerMap.get(opportunityId).Payment_Frequency__c != oldTriggerMap.get(opportunityId).Payment_Frequency__c ||
                 newTriggerMap.get(opportunityId).Years__c != oldTriggerMap.get(opportunityId).Years__c ) &&
                 newTriggerMap.get(opportunityId).Complete_all_Installments_at_Once__c == false)
@@ -101,7 +100,7 @@ public with sharing class TriggerDonationHelperHandler
                 newChildDonationList.add(newTriggerMap.get(opportunityId));
             }
 
-            else if( (newTriggerMap.get(opportunityId).Amount == oldTriggerMap.get(opportunityId).Amount || 
+            else if( (newTriggerMap.get(opportunityId).Amount == oldTriggerMap.get(opportunityId).Amount ||
                 newTriggerMap.get(opportunityId).Payment_Frequency__c == oldTriggerMap.get(opportunityId).Payment_Frequency__c ||
                 newTriggerMap.get(opportunityId).Years__c == oldTriggerMap.get(opportunityId).Years__c ) &&
                 newTriggerMap.get(opportunityId).Complete_all_Installments_at_Once__c == true)
@@ -111,12 +110,12 @@ public with sharing class TriggerDonationHelperHandler
         }
 
         List<Installment_Manager__c> installmentsDeleteList  = [
-                                                                  SELECT Id, Donation_Manager__c 
-                                                                  FROM Installment_Manager__c 
+                                                                  SELECT Id, Donation_Manager__c
+                                                                  FROM Installment_Manager__c
                                                                   WHERE Donation_Manager__c IN :opportunityIdList
                                                                 ];
 
-        if ( !installmentsDeleteList.isEmpty() ) 
+        if ( !installmentsDeleteList.isEmpty() )
         {
            Database.delete(installmentsDeleteList);
            TriggerDonationHelperHandler.createDonationInstallment(newChildDonationList);
@@ -125,15 +124,21 @@ public with sharing class TriggerDonationHelperHandler
         {
            TriggerDonationHelperHandler.createDonationInstallment(newChildDonationList);
         }
-        
+
 
         List<Installment_Manager__c> installmentsUpdateList  = [
-                                                                SELECT Id, Donation_Manager__c 
-                                                                FROM Installment_Manager__c 
-                                                                WHERE Donation_Manager__c IN :completeAllAtOnce
+                                                                SELECT Id,
+                                                                       Donation_Manager__c,
+                                                                       Amount_Paid__c,
+                                                                       Paid_Amount__c,
+                                                                       Installment_Status__c,
+                                                                       Installment_Amount__c
+                                                                FROM Installment_Manager__c
+                                                                WHERE (Donation_Manager__c IN :completeAllAtOnce)
+                                                                AND   (Installment_Status__c IN ('Pending' ,'Open') )
                                                                 ];
 
-        if (!installmentsUpdateList.isEmpty()) 
+        if (!installmentsUpdateList.isEmpty())
         {
             TriggerDonationHelperHandler.updateInstallmentAtOnce(installmentsUpdateList);
         }
@@ -141,6 +146,15 @@ public with sharing class TriggerDonationHelperHandler
 
     public static void updateInstallmentAtOnce(List<Installment_Manager__c> installmentsUpdateList)
     {
-        
+        List<Installment_Manager__c> updatedInstallmentList = new List<Installment_Manager__c>();
+
+        for (Installment_Manager__c installmentIterator : installmentsUpdateList)
+        {
+            installmentIterator.Paid_Amount__c = installmentIterator.Installment_Amount__c;
+            installmentIterator.Amount_Paid__c = true;
+            updatedInstallmentList.add(installmentIterator);
+        }
+
+        Database.update(updatedInstallmentList);
     }
 }
