@@ -4,7 +4,7 @@ public with sharing class TriggerDonationHelperHandler
     public static Integer dateIncreament = 0;
 
     public static void createInstallmentCall( Installment_Manager__c singleInstallment, Id parameterId,Date parameterDate,
-                                              Decimal parameterAmount,Integer dateCount, Integer installmentCount)
+                                              Decimal parameterAmount,Integer dateCount, Decimal installmentCount)
     {
         for(Integer iterator =0; iterator <installmentCount; iterator++)
         {
@@ -18,7 +18,7 @@ public with sharing class TriggerDonationHelperHandler
 
         public static void createDonationInstallment(List<Opportunity> newDonationList)
         {
-            Installment_Manager__c singleInstallment = new Installment_Manager__c();
+            Installment_Manager__c singleInstallment;
 
             for (Opportunity opportunityInstance : newDonationList)
             {
@@ -28,37 +28,29 @@ public with sharing class TriggerDonationHelperHandler
                     {
                         dateIncreament = 0;
 
-                        TriggerDonationHelperHandler.createInstallmentCall(
-                        singleInstallment,
-                        opportunityInstance.Id,
-                        opportunityInstance.CloseDate,
-                        (Decimal)opportunityInstance.Amount_per_Installment__c,
-                        (dateIncreament+1),
-                        opportunityInstance.number_of_installments__c
-                        );
+                        TriggerDonationHelperHandler.createInstallmentCall(singleInstallment = new Installment_Manager__c(),opportunityInstance.Id,
+                        opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,(dateIncreament+1),
+                        opportunityInstance.number_of_installments__c);
                     }
                     else if(opportunityInstance.Payment_Frequency__c == 'Quarterly')
                     {
-                        dateIncreament = 0;
+                       dateIncreament = 0;
 
-                        TriggerDonationHelperHandler.createInstallmentCall(
-                        singleInstallment, opportunityInstance.Id,opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,
-                        dateIncreament+3,opportunityInstance.number_of_installments__c);
+                       TriggerDonationHelperHandler.createInstallmentCall(singleInstallment = new Installment_Manager__c(), opportunityInstance.Id,
+                       opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,dateIncreament+3,opportunityInstance.number_of_installments__c);
                     }
                     else if(opportunityInstance.Payment_Frequency__c == 'Half Yearly')
                     {
-                        dateIncreament = 0;
+                       dateIncreament = 0;
 
-                        TriggerDonationHelperHandler.createInstallmentCall(
-                        singleInstallment, opportunityInstance.Id,opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,
-                        dateIncreament+6,opportunityInstance.number_of_installments__c);
+                       TriggerDonationHelperHandler.createInstallmentCall( singleInstallment = new Installment_Manager__c(), opportunityInstance.Id,
+                       opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,dateIncreament+6,opportunityInstance.number_of_installments__c);
 
                     }
                     else
                     {
-                        TriggerDonationHelperHandler.createInstallmentCall(
-                        singleInstallment, opportunityInstance.Id,opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,
-                        0,opportunityInstance.number_of_installments__c);
+                        TriggerDonationHelperHandler.createInstallmentCall(singleInstallment, opportunityInstance.Id,
+                        opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,0,opportunityInstance.number_of_installments__c);
                     }
                 }
                 else
