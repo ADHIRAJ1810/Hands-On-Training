@@ -32,8 +32,8 @@ public with sharing class TriggerDonationHelperHandler
                         singleInstallment,
                         opportunityInstance.Id,
                         opportunityInstance.CloseDate,
-                        opportunityInstance.Amount_per_Installment__c,
-                        dateIncreament+1,
+                        (Decimal)opportunityInstance.Amount_per_Installment__c,
+                        (dateIncreament+1),
                         opportunityInstance.number_of_installments__c
                         );
                     }
@@ -42,7 +42,7 @@ public with sharing class TriggerDonationHelperHandler
                         dateIncreament = 0;
 
                         TriggerDonationHelperHandler.createInstallmentCall(
-                        singleInstallment, opportunityInstance.Id,opportunityInstance.CloseDate, opportunityInstance.Amount_per_Installment__c,
+                        singleInstallment, opportunityInstance.Id,opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,
                         dateIncreament+3,opportunityInstance.number_of_installments__c);
                     }
                     else if(opportunityInstance.Payment_Frequency__c == 'Half Yearly')
@@ -50,14 +50,14 @@ public with sharing class TriggerDonationHelperHandler
                         dateIncreament = 0;
 
                         TriggerDonationHelperHandler.createInstallmentCall(
-                        singleInstallment, opportunityInstance.Id,opportunityInstance.CloseDate, opportunityInstance.Amount_per_Installment__c,
+                        singleInstallment, opportunityInstance.Id,opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,
                         dateIncreament+6,opportunityInstance.number_of_installments__c);
 
                     }
                     else
                     {
                         TriggerDonationHelperHandler.createInstallmentCall(
-                        singleInstallment, opportunityInstance.Id,opportunityInstance.CloseDate, opportunityInstance.Amount_per_Installment__c,
+                        singleInstallment, opportunityInstance.Id,opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,
                         0,opportunityInstance.number_of_installments__c);
                     }
                 }
