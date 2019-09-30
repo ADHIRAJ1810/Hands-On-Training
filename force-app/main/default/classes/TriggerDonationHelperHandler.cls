@@ -2,8 +2,10 @@ public with sharing class TriggerDonationHelperHandler
 {
     public static List<Installment_Manager__c> installmentList = new List<Installment_Manager__c>();
     public static Integer dateIncreament = 0;
-    public static Boolean flag = false;
 
+    /**
+    Function createInstallmentCall: Creating the children of Donation and adding them in List
+     */
     public static void createInstallmentCall( Id parameterId,Date parameterDate,
                                               Decimal parameterAmount,Integer dateCount, Decimal installmentCount)
     {
@@ -18,81 +20,63 @@ public with sharing class TriggerDonationHelperHandler
         }
     }
 
-        public static void createDonationInstallment(List<Opportunity> newDonationList)
+    /** 
+    Function createDonationInstallment: Create Installments after creating Donation according to Number of Installments field on the Donation.
+    */
+    public static void createDonationInstallment(List<Opportunity> newDonationList)
+    {
+        for (Opportunity opportunityInstance : newDonationList)
         {
-            System.debug('Trigger.New Opportunity'+newDonationList);
-        
-            for (Opportunity opportunityInstance : newDonationList)
+            if(opportunityInstance.Amount > 0 || opportunityInstance.Amount!=null)
             {
-                System.debug('26: Counter'+dateIncreament);
-                if(opportunityInstance.Amount > 0 || opportunityInstance.Amount!=null)
+                if (opportunityInstance.Payment_Frequency__c == 'Monthly')
                 {
-                System.debug('29:Counter'+dateIncreament);
-
-                    if (opportunityInstance.Payment_Frequency__c == 'Monthly')
-                    {
-                        // dateIncreament = 0;
-                        System.debug('Monthly debug'+opportunityInstance.Payment_Frequency__c);
-                        TriggerDonationHelperHandler.createInstallmentCall(opportunityInstance.Id,
-                        opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,(1),
-                        opportunityInstance.number_of_installments__c);
-                    }
-                    else if(opportunityInstance.Payment_Frequency__c == 'Quarterly')
-                    {
-                    //    dateIncreament = 0;
-                        System.debug('Quarterly debug'+opportunityInstance.Payment_Frequency__c);
-
-                       TriggerDonationHelperHandler.createInstallmentCall( opportunityInstance.Id,
-                       opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,3,opportunityInstance.number_of_installments__c);
-                    }
-                    else if(opportunityInstance.Payment_Frequency__c == 'Half Yearly')
-                    {
-                    //    dateIncreament = 0;
-                        System.debug('Half Yearly debug'+opportunityInstance.Payment_Frequency__c);
-
-                       TriggerDonationHelperHandler.createInstallmentCall(  opportunityInstance.Id,
-                       opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,6,opportunityInstance.number_of_installments__c);
-
-                    }
-                    else
-                    {
-                        System.debug('One time debug ' +opportunityInstance);
-                        TriggerDonationHelperHandler.createInstallmentCall( opportunityInstance.Id,
-                        opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,0,opportunityInstance.number_of_installments__c);
-                    }
-
-                System.debug('63 :Counter'+dateIncreament);}
-
+                    TriggerDonationHelperHandler.createInstallmentCall(opportunityInstance.Id,
+                    opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,(1),
+                    opportunityInstance.number_of_installments__c);
+                }
+                else if(opportunityInstance.Payment_Frequency__c == 'Quarterly')
+                {
+                    TriggerDonationHelperHandler.createInstallmentCall( opportunityInstance.Id,
+                    opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,3,opportunityInstance.number_of_installments__c);
+                }
+                else if(opportunityInstance.Payment_Frequency__c == 'Half Yearly')
+                {
+                    TriggerDonationHelperHandler.createInstallmentCall(  opportunityInstance.Id,
+                    opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,6,opportunityInstance.number_of_installments__c);
+                }
                 else
                 {
-                    System.debug('Debug for Amount =0 || Null ');
+                    TriggerDonationHelperHandler.createInstallmentCall( opportunityInstance.Id,
+                    opportunityInstance.CloseDate,(Decimal)opportunityInstance.Amount_per_Installment__c,0,opportunityInstance.number_of_installments__c);
                 }
             }
-            
-            //Try to insert InstallmentList if Installment not Debug Exception.
-            try
+            else
             {
-                if (installmentList.size() > 0 || installmentList != Null )
-                {
-                    System.debug('75:Before Insert installment list '+installmentList);
-                    flag =true;
-                    
-                    insert installmentList;
-                    
-                    System.debug('77:After Insert installment list '+installmentList);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.debug('Exception--- ' + ex);
+                System.debug('Debug for Amount =0 || Null ');
             }
         }
+        
+        //Try to insert InstallmentList if Installment not Debug Exception.
+        try
+        {
+            if (installmentList.size() > 0 || installmentList != Null )
+            {
+                insert installmentList;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.debug('Exception--- ' + ex);
+        }
+    }
 
+    /**
+    Function createInstallmentForUpdatedAmount: If Mass Donation selected completed all children and update them completed (with satisfying condition accordingly).
+     */
     public static void createInstallmentForUpdatedAmount(Map<Id,Opportunity> oldTriggerMap,Map<Id,Opportunity> newTriggerMap)
     {
-        List<Id> opportunityIdList = new List<Id>();
         List<Id> completeAllAtOnce = new List<Id>();
-
         List<Opportunity> newChildDonationList = new List<Opportunity>();
 
         for(Id opportunityId : newTriggerMap.keySet())
@@ -119,8 +103,11 @@ public with sharing class TriggerDonationHelperHandler
         {
             TriggerDonationHelperHandler.updateInstallmentAtOnce(installmentsUpdateList);
         }
-}
+    }
 
+    /**
+    Function updateInstallmentAtOnce: Satifying condiotions required for update in createInstallmentForUpdatedAmount().
+     */
     public static void updateInstallmentAtOnce(List<Installment_Manager__c> installmentsUpdateList)
     {
         List<Installment_Manager__c> updatedInstallmentList = new List<Installment_Manager__c>();
