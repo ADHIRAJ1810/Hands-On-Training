@@ -2,6 +2,7 @@ public with sharing class TriggerDonationHelperHandler
 {
     public static List<Installment_Manager__c> installmentList = new List<Installment_Manager__c>();
     public static Integer dateIncreament = 0;
+    public static Boolean avoidRecursionFlag = false;
 
     /**
     Function createInstallmentCall: Creating the children of Donation and adding them in List
@@ -25,6 +26,8 @@ public with sharing class TriggerDonationHelperHandler
     */
     public static void createDonationInstallment(List<Opportunity> newDonationList)
     {
+        avoidRecursionFlag = true;
+        dateIncreament = 0;
         for (Opportunity opportunityInstance : newDonationList)
         {
             if(opportunityInstance.Amount > 0 || opportunityInstance.Amount!=null)
@@ -78,31 +81,71 @@ public with sharing class TriggerDonationHelperHandler
     {
         List<Id> completeAllAtOnce = new List<Id>();
         List<Opportunity> newChildDonationList = new List<Opportunity>();
+        List<Id> opportunityIdList = new List<Id>();
 
-        for(Id opportunityId : newTriggerMap.keySet())
+        if(avoidRecursionFlag == false)
         {
-            if( newTriggerMap.get(opportunityId).Complete_all_Installments_at_Once__c == true)
+            for(Id opportunityId : newTriggerMap.keySet())
             {
-                completeAllAtOnce.add(opportunityId);
+                if( 
+              ( newTriggerMap.get(opportunityId).Amount != oldTriggerMap.get(opportunityId).Amount ||
+                newTriggerMap.get(opportunityId).Payment_Frequency__c != oldTriggerMap.get(opportunityId).Payment_Frequency__c ||
+                newTriggerMap.get(opportunityId).Years__c != oldTriggerMap.get(opportunityId).Years__c ) &&
+                newTriggerMap.get(opportunityId).Complete_all_Installments_at_Once__c == false )
+                {
+                    opportunityIdList.add(opportunityId);
+                    newChildDonationList.add(newTriggerMap.get(opportunityId));
+                }
             }
-        }
-
-        List<Installment_Manager__c> installmentsUpdateList  = [
-                                                                SELECT Id,
-                                                                       Donation_Manager__c,
-                                                                       Amount_Paid__c,
-                                                                       Paid_Amount__c,
-                                                                       Installment_Status__c,
-                                                                       Installment_Amount__c
-                                                                FROM Installment_Manager__c
-                                                                WHERE (Donation_Manager__c IN :completeAllAtOnce)
-                                                                AND   (Installment_Status__c IN ('Pending' ,'Open') )
+        
+        List<Installment_Manager__c> installmentsDeleteList  = [
+                                                                  SELECT Id, Donation_Manager__c
+                                                                  FROM Installment_Manager__c
+                                                                  WHERE Donation_Manager__c IN :opportunityIdList
                                                                 ];
 
-        if (!installmentsUpdateList.isEmpty())
-        {
-            TriggerDonationHelperHandler.updateInstallmentAtOnce(installmentsUpdateList);
+            if ( !installmentsDeleteList.isEmpty() )
+            {
+                Database.delete(installmentsDeleteList);
+                TriggerDonationHelperHandler.createDonationInstallment(newChildDonationList);
+            }
+            else
+            {
+                TriggerDonationHelperHandler.createDonationInstallment(newChildDonationList);
+            }
+
+
         }
+        else
+        {
+            for(Id opportunityId : newTriggerMap.keySet())
+            {
+                if( newTriggerMap.get(opportunityId).Complete_all_Installments_at_Once__c == true)
+                {
+                    completeAllAtOnce.add(opportunityId);
+                }
+            }
+
+            List<Installment_Manager__c> installmentsUpdateList  = [
+                                                                    SELECT Id,
+                                                                        Donation_Manager__c,
+                                                                        Amount_Paid__c,
+                                                                        Paid_Amount__c,
+                                                                        Installment_Status__c,
+                                                                        Installment_Amount__c
+                                                                    FROM Installment_Manager__c
+                                                                    WHERE (Donation_Manager__c IN :completeAllAtOnce)
+                                                                    AND   (Installment_Status__c IN ('Pending' ,'Open') )
+                                                                    ];
+
+            if (!installmentsUpdateList.isEmpty())
+            {
+                TriggerDonationHelperHandler.updateInstallmentAtOnce(installmentsUpdateList);
+            }
+
+        }
+
+
     }
 
     /**
