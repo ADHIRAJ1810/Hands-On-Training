@@ -1,59 +1,60 @@
-@isTest
 public class TestDataFactory 
 {
     public static String status='Open';
     public static String contactId;
-    public static Decimal amountDonate =5000;
+    public static Decimal amountDonate;
     public static String payment_frequency ='Half Yearly';
     public static Integer years =1;
     public static Date donationDate = System.today();
-    public static String demoNames ='Test :';
+    public static String demoNames ='Test';
+    public static Id saveId;
+    public static List<Opportunity> donationList = new List<Opportunity>();
 
-    // Cretating Doantion of Payment frequency Halfyearly with Particular contact with doantion amount 5000.
-    public static List<Opportunity> generateDonation(Integer numberOfdonations)
+    public static List<Opportunity> generateDonation()
     {
-        List<Opportunity> newDonationList = new List<Opportunity>();
-
-        for (Integer iterator =0; iterator<numberOfdonations; iterator ++) 
+        for(Integer i=0;i<4;i++) 
         {
             Opportunity newDonation = new Opportunity();
-            newDonation.Name = demoNames+iterator;
+            newDonation.Name = demoNames;
             newDonation.StageName=status;
             newDonation.CloseDate = donationDate;
-            newDonation.Amount = amountDonate;
-            newDonation.Payment_Frequency__c = payment_frequency;
+            if(i==0)
+            {
+	            newDonation.Payment_Frequency__c = payment_frequency;
+                newDonation.Amount = 6000;
+            }
+            else if(i==1)
+            {
+                newDonation.Payment_Frequency__c = 'Monthly';
+                newDonation.Amount = 12000;
+            }
+            else if(i==2)
+            {
+                newDonation.Payment_Frequency__c = 'Quarterly';
+                newDonation.Amount = 12000;
+            }
+            else if(i==3)
+            {
+                newDonation.Payment_Frequency__c = 'One Time';
+               	newDonation.Amount = 500; 
+            }
             newDonation.Years__c = years;
             newDonation.Complete_all_Installments_at_Once__c =false;
-            newDonationList.add(newDonation);
+            donationList.add(newDonation);
         }
-        Insert newDonationList;
-        return newDonationList;
+        insert donationList;        
+        return donationList;
     }
-
-    public static Integer getInstallmentCount(Decimal amountCheck)
+    
+    public static List<Id> childList()
     {
-        List<Installment_Manager__c> installmentList = [ 
-                                                SELECT  Id,
-                                                        Installment_Amount__c
-                                                FROM    Installment_Manager__c
-                                                WHERE   Installment_Manager__c.Installment_Amount__c =:amountCheck
-                                                ];
-        System.debug('Installmetn with amount '+amountCheck+'has size:'+installmentList);
-        return installmentList.size();
-    }
-
-    public static List<Opportunity> updateDonation(List<Opportunity> updateDonationList,Decimal updatedAmount)
-    {
-        List<Opportunity> updatedOpportunityList = new List<Opportunity>();
-
-        for (Opportunity opportunityObject : updateDonationList) 
+        TestDataFactory.generateDonation();
+        List<Id> parentId = new List<Id>();
+        
+        for(Opportunity opportunityInstance : donationList)
         {
-           opportunityObject.Amount = updatedAmount;
-           opportunityObject.Payment_Frequency__c = 'One Time';
-           updatedOpportunityList.add(opportunityObject);
+            parentId.add(opportunityInstance.Id);
         }
-        Update updatedOpportunityList;
-        return updatedOpportunityList;
-    }
-
+        return parentId;
+    }    
 }

@@ -2,59 +2,69 @@
 public with sharing class DonationTriggerTest 
 {
     public static Integer numberOfDonations =5;
-    public static Integer actualInstallments;
-    public static Integer expectedInstallments=10;
 
     @isTest
-    public static void checkInstallmentCount()
+    public static void createDonation()
     {
-        //Create 5 records of Donations
+        
         System.Test.startTest();
+        List<Opportunity> donationList = TestDataFactory.generateDonation();
+		List<Installment_Manager__c> installmentList = [ 
+                                                        SELECT  Id,
+                                                                Donation_Manager__c
+                                                        FROM    Installment_Manager__c
+                                                        WHERE   Installment_Manager__c.Installment_Amount__c =:1000 	
+                                                        ];
 
-        List<Opportunity> newDonationGenerateList = TestDataFactory.generateDonation(numberOfDonations);
-
-        // actualInstallments = TestDataFactory.getInstallmentCount(5000);
-
-        // System.assertEquals(expectedInstallments,actualInstallments);
+        System.assertEquals(12,installmentList.size());
 
         System.Test.stopTest();
     }
 
     @isTest
-    public static void updatedInstallmentCountCheck()
+    public static void createAndUpdateDonation()
     {
-        Integer updateAmount =1000;
+        Decimal updateAmount =200;
         System.Test.startTest();
 
-        List<Opportunity> newDonationGenerateList = TestDataFactory.generateDonation(1);
-        //TestDataFactory.getInstallmentCount(5000);
+        List<Opportunity> donationList = TestDataFactory.generateDonation();
+        Opportunity newDonation2 = [SELECT Id,Amount,Payment_Frequency__c FROM Opportunity 
+                                          WHERE Payment_Frequency__c='Monthly' LIMIT 1];
+        newDonation2.Amount = updateAmount;
+        newDonation2.Payment_Frequency__c = 'One Time';
+        Update newDonation2;
 
-        List<Opportunity> updatedDonationList = TestDataFactory.updateDonation(newDonationGenerateList,updateAmount);
-        //System.assertEquals(2,TestDataFactory.getInstallmentCount(1000));
+        List<Installment_Manager__c> installmentList = [SELECT  Id,
+                                                                Donation_Manager__c
+                                                        FROM    Installment_Manager__c
+                                                        WHERE   Installment_Manager__c.Installment_Amount__c =:200 	
+                                                        ];
+     
+        System.assertEquals(1,installmentList.size());
 
         System.Test.stopTest();
 
     }
 
     @isTest
-    public static void updateAllatOnceCheck()
+    public static void updateAllatOnceDonation()
     {
 
-        Integer updateAmount =1000;
+        Integer updateAmount =500;
         System.Test.startTest();
+        List<Opportunity> donationList3 = TestDataFactory.generateDonation();
 
-        List<Opportunity> newDonationGenerateList = TestDataFactory.generateDonation(1);
-        List<Opportunity> newDonationUpdateList = new List<Opportunity>();
+        List<Opportunity> fetchDonation = [SELECT Id,Amount,Payment_Frequency__c FROM Opportunity 
+                                          WHERE Payment_Frequency__c='One Time' LIMIT 1];
 
-        for (Opportunity opportunityInstance: newDonationGenerateList) 
-        {
-            opportunityInstance.Complete_all_Installments_at_Once__c =true;
-            newDonationUpdateList.add(opportunityInstance);
-        }
+        fetchDonation[0].Complete_all_Installments_at_Once__c =true;
+        fetchDonation[0].Mass_Donation_Amount__c = updateAmount;
+        update fetchDonation;
+        
+        List<Opportunity> fetchDonation2 = [SELECT Id,Amount FROM Opportunity 
+                                           WHERE Mass_Donation_Amount__c = :500];
 
-        update newDonationUpdateList;
-
-        System.assertEquals('Completed',newDonationUpdateList[0].StageName);
+        System.assertEquals(500,fetchDonation[0].Mass_Donation_Amount__c);
         System.Test.stopTest();
     }
 }
