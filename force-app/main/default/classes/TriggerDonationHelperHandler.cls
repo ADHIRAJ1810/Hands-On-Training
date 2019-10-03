@@ -27,7 +27,7 @@ public with sharing class TriggerDonationHelperHandler
     public static void createDonationInstallment(List<Opportunity> newDonationList)
     {
         avoidRecursionFlag = true;
-        dateIncreament = 0;
+        //dateIncreament = 0;
         for (Opportunity opportunityInstance : newDonationList)
         {
             if(opportunityInstance.Amount > 0 || opportunityInstance.Amount!=null)
