@@ -1,3 +1,11 @@
+/**
+ * @File Name          : TriggerDonationHelperHandler.cls
+ * @Description        : Actual Logic perfoming for Trigger
+ * @Author             : Adhiraj N B
+ * @Group              : 
+ * @Last Modified By   : Adhiraj N B
+ * @Last Modified On   : 10/4/2019, 10:20:35 AM
+**/
 public with sharing class TriggerDonationHelperHandler
 {
     public static List<Installment_Manager__c> installmentList = new List<Installment_Manager__c>();
@@ -5,8 +13,16 @@ public with sharing class TriggerDonationHelperHandler
     public static Boolean avoidRecursionFlag = false;
 
     /**
-    Function createInstallmentCall: Creating the children of Donation and adding them in List
-     */
+    * @description : Method Accepting parameters from createDonationInstallment
+                    and Creating the Installments.
+    * @author Adhiraj N B | 10/4/2019 
+    * @param parameterId 
+    * @param parameterDate 
+    * @param parameterAmount 
+    * @param dateCount 
+    * @param installmentCount 
+    * @return void 
+    **/
     public static void createInstallmentCall( Id parameterId,Date parameterDate,
                                               Decimal parameterAmount,Integer dateCount, Decimal installmentCount)
     {
@@ -21,9 +37,12 @@ public with sharing class TriggerDonationHelperHandler
         }
     }
 
-    /** 
-    Function createDonationInstallment: Create Installments after creating Donation according to Number of Installments field on the Donation.
-    */
+    /**
+    * @description : Insertion of Installments in DB.
+    * @author Adhiraj N B | 10/4/2019 
+    * @param newDonationList 
+    * @return void 
+    **/
     public static void createDonationInstallment(List<Opportunity> newDonationList)
     {
         avoidRecursionFlag = true;
@@ -60,7 +79,7 @@ public with sharing class TriggerDonationHelperHandler
             }
         }
         
-        //Try to insert InstallmentList if Installment not Debug Exception.
+        //Try to insert InstallmentList if not Debug Exception.
         try
         {
             if (installmentList.size() > 0 || installmentList != Null )
@@ -74,9 +93,14 @@ public with sharing class TriggerDonationHelperHandler
         }
     }
 
+
     /**
-    Function createInstallmentForUpdatedAmount: If Mass Donation selected completed all children and update them completed (with satisfying condition accordingly).
-     */
+    * @description : For updated data deleting old Installments and Creating new accordingly.
+    * @author Adhiraj N B | 10/4/2019 
+    * @param oldTriggerMap 
+    * @param newTriggerMap 
+    * @return void 
+    **/
     public static void createInstallmentForUpdatedAmount(Map<Id,Opportunity> oldTriggerMap,Map<Id,Opportunity> newTriggerMap)
     {
         List<Id> completeAllAtOnce = new List<Id>();
@@ -148,9 +172,13 @@ public with sharing class TriggerDonationHelperHandler
 
     }
 
+
     /**
-    Function updateInstallmentAtOnce: Satifying condiotions required for update in createInstallmentForUpdatedAmount().
-     */
+    * @description : For mass donation Installment should Update Accordingly
+    * @author Adhiraj N B | 10/4/2019 
+    * @param installmentsUpdateList 
+    * @return void 
+    **/
     public static void updateInstallmentAtOnce(List<Installment_Manager__c> installmentsUpdateList)
     {
         List<Installment_Manager__c> updatedInstallmentList = new List<Installment_Manager__c>();

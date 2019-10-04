@@ -1,4 +1,9 @@
 public class TestDataFactory 
+/**
+* @description :Creating All Possible Opportunities
+* @author Adhiraj N B | 10/4/2019 
+* @return String 
+**/
 {
     public static String status='Open';
     public static String contactId;
@@ -45,16 +50,4 @@ public class TestDataFactory
         insert donationList;        
         return donationList;
     }
-    
-    public static List<Id> childList()
-    {
-        TestDataFactory.generateDonation();
-        List<Id> parentId = new List<Id>();
-        
-        for(Opportunity opportunityInstance : donationList)
-        {
-            parentId.add(opportunityInstance.Id);
-        }
-        return parentId;
-    }    
 }

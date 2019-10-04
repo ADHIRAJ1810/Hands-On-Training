@@ -1,8 +1,40 @@
+/**
+ * @File Name          : DonationTriggerTest.cls
+ * @Description        : 
+ * @Author             : Adhiraj N B
+ * @Group              : 
+ * @Last Modified By   : Adhiraj N B
+ * @Last Modified On   : 10/4/2019, 10:11:28 AM
+**/
 @isTest
 public with sharing class DonationTriggerTest 
 {
     public static Integer numberOfDonations =5;
-
+	
+	/**
+	* @description :Creating Opportunity
+	* @author Adhiraj N B | 10/4/2019 
+	* @return void 
+	**/
+	@testSetup static void setup() 
+    {
+        Opportunity setupOpportunity = new Opportunity();
+        setupOpportunity.Name = 'Setup';
+        setupOpportunity.StageName='Open';
+        setupOpportunity.CloseDate = System.today();
+        setupOpportunity.Payment_Frequency__c = 'Half Yearly';
+        setupOpportunity.Amount = 6000;
+        setupOpportunity.Years__c = 1;
+        setupOpportunity.Complete_all_Installments_at_Once__c =false;
+        insert setupOpportunity;
+    }
+    
+    
+    /**
+    * @description : Creating Opportunity through TDF
+    * @author Adhiraj N B | 10/4/2019 
+    * @return void 
+    **/
     @isTest
     public static void createDonation()
     {
@@ -21,18 +53,24 @@ public with sharing class DonationTriggerTest
         System.Test.stopTest();
     }
 
+    
+    /**
+    * @description :Updating the Opportunity from Setup method
+    * @author Adhiraj N B | 10/4/2019 
+    * @return void 
+    **/
     @isTest
     public static void createAndUpdateDonation()
     {
         Decimal updateAmount =200;
         System.Test.startTest();
-
-        List<Opportunity> donationList = TestDataFactory.generateDonation();
-        Opportunity newDonation2 = [SELECT Id,Amount,Payment_Frequency__c FROM Opportunity 
-                                          WHERE Payment_Frequency__c='Monthly' LIMIT 1];
-        newDonation2.Amount = updateAmount;
-        newDonation2.Payment_Frequency__c = 'One Time';
-        Update newDonation2;
+		
+        Opportunity thisOpportunityUpdate = [SELECT Id,Amount,Payment_Frequency__c 
+                                             FROM Opportunity
+                                             WHERE Name='Setup' LIMIT 1];
+        thisOpportunityUpdate.Amount = updateAmount;
+        thisOpportunityUpdate.Payment_Frequency__c = 'One Time';
+        Update thisOpportunityUpdate;
 
         List<Installment_Manager__c> installmentList = [SELECT  Id,
                                                                 Donation_Manager__c
@@ -46,6 +84,12 @@ public with sharing class DonationTriggerTest
 
     }
 
+
+    /**
+    * @description :Testing method mass donation
+    * @author Adhiraj N B | 10/4/2019 
+    * @return void 
+    **/
     @isTest
     public static void updateAllatOnceDonation()
     {
